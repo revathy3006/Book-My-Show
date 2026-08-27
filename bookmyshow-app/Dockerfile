@@ -4,14 +4,16 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 
-RUN npm ci --legacy-peer-deps
+COPY node_modules ./node_modules
 
 COPY . .
 
 ENV NODE_OPTIONS=--openssl-legacy-provider
 ENV CI=false
+ENV PORT=3000
 
 RUN npm run build
+
 
 FROM nginx:alpine
 
