@@ -4,11 +4,12 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 
-COPY node_modules ./node_modules
+ENV NODE_OPTIONS=--openssl-legacy-provider
+
+RUN npm ci --legacy-peer-deps --no-audit --no-fund
 
 COPY . .
 
-ENV NODE_OPTIONS=--openssl-legacy-provider
 ENV CI=false
 ENV PORT=3000
 
