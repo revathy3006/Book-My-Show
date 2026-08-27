@@ -1,0 +1,47 @@
+---
+- name: Deploy Book My Show application to EKS
+  hosts: local
+  connection: local
+  gather_facts: false
+
+  vars:
+    deployment_file: "../deployment.yml"
+    service_file: "../service.yml"
+    build_number: "{{ lookup('env', 'BUILD_NUMBER') }}"
+
+  tasks:
+
+    - name: Display build number
+      debug:
+        msg: "Deploying BMS image with BUILD_NUMBER={{ build_number }}"
+
+    - name: Create temporary deployment file
+      template:
+        src: "../deployment.yml"
+        dest: "/tmp/bms-deployment.yml"
+
+    - name: Replace IMAGE_TAG with BUILD_NUMBER
+      replace:
+        path: "/tmp/bms-deployment.yml"
+        regexp: "IMAGE_TAG"
+        replace: "{{ build_number }}"
+
+    - name: Apply BMS deployment
+      command:
+        cmd: kubectl apply -f /tmp/bms-deployment.yml
+
+    - name: Apply BMS service
+      command:
+        cmd: kubectl apply -f "{{ service_file }}"
+
+    - name: Wait for deployment rollout
+      command:
+        cmd: kubectl rollout status deployment/bms-app --timeout=180s
+
+    - name: Show BMS pods
+      command:
+        cmd: kubectl get pods -l app=bms
+
+    - name: Show BMS service
+      command:
+        cmd: kubectl get service bms-service
