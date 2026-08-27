@@ -30,7 +30,7 @@ pipeline {
             steps {
                 dir('bookmyshow-app') {
                     sh '''
-                        npm install
+                        npm ci --legacy-peer-deps --no-audit --no-fund
                     '''
                 }
             }
@@ -111,6 +111,7 @@ pipeline {
                 '''
             }
         }
+
         stage('Deploy to EKS using Ansible') {
             steps {
                 sh '''
