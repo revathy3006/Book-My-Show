@@ -87,6 +87,14 @@
       command:
         cmd: kubectl apply -f "{{ monitoring_dir }}/grafana-datasource.yml"
 
+    - name: Deploy Grafana dashboard provider
+      command:
+        cmd: kubectl apply -f "{{ monitoring_dir }}/grafana-dashboard-provider.yml"
+
+    - name: Deploy Grafana dashboard
+      command:
+        cmd: kubectl apply -f "{{ monitoring_dir }}/grafana-dashboard.yml"
+
     - name: Deploy Grafana
       command:
         cmd: kubectl apply -f "{{ monitoring_dir }}/grafana-deployment.yml"
