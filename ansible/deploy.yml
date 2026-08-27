@@ -1,5 +1,5 @@
 ---
-- name: Deploy Book My Show application to EKS
+- name: Deploy Book My Show and Monitoring to EKS
   hosts: local
   connection: local
   gather_facts: false
@@ -7,15 +7,20 @@
   vars:
     deployment_file: "../deployment.yml"
     service_file: "../service.yml"
+    monitoring_dir: "../monitoring"
     build_number: "{{ lookup('env', 'BUILD_NUMBER') }}"
 
   tasks:
+
+    # -------------------------
+    # BMS APPLICATION
+    # -------------------------
 
     - name: Display build number
       debug:
         msg: "Deploying BMS image with BUILD_NUMBER={{ build_number }}"
 
-    - name: Create temporary deployment file
+    - name: Create temporary BMS deployment file
       copy:
         src: "{{ deployment_file }}"
         dest: "/tmp/bms-deployment.yml"
@@ -26,11 +31,11 @@
         regexp: "IMAGE_TAG"
         replace: "{{ build_number }}"
 
-    - name: Apply BMS deployment
+    - name: Deploy BMS application
       command:
         cmd: kubectl apply -f /tmp/bms-deployment.yml
 
-    - name: Apply BMS LoadBalancer service
+    - name: Deploy BMS LoadBalancer service
       command:
         cmd: kubectl apply -f "{{ service_file }}"
 
@@ -38,10 +43,87 @@
       command:
         cmd: kubectl rollout status deployment/bms-app --timeout=180s
 
+
+    # -------------------------
+    # MONITORING NAMESPACE
+    # -------------------------
+
+    - name: Create monitoring namespace
+      command:
+        cmd: kubectl apply -f "{{ monitoring_dir }}/namespace.yml"
+
+
+    # -------------------------
+    # PROMETHEUS
+    # -------------------------
+
+    - name: Deploy Prometheus configuration
+      command:
+        cmd: kubectl apply -f "{{ monitoring_dir }}/prometheus-config.yml"
+
+    - name: Deploy Prometheus
+      command:
+        cmd: kubectl apply -f "{{ monitoring_dir }}/prometheus-deployment.yml"
+
+    - name: Deploy Prometheus service
+      command:
+        cmd: kubectl apply -f "{{ monitoring_dir }}/prometheus-service.yml"
+
+
+    # -------------------------
+    # KUBE STATE METRICS
+    # -------------------------
+
+    - name: Deploy kube-state-metrics
+      command:
+        cmd: kubectl apply -f "{{ monitoring_dir }}/kube-state-metrics.yml"
+
+
+    # -------------------------
+    # GRAFANA
+    # -------------------------
+
+    - name: Deploy Grafana datasource
+      command:
+        cmd: kubectl apply -f "{{ monitoring_dir }}/grafana-datasource.yml"
+
+    - name: Deploy Grafana
+      command:
+        cmd: kubectl apply -f "{{ monitoring_dir }}/grafana-deployment.yml"
+
+    - name: Deploy Grafana LoadBalancer service
+      command:
+        cmd: kubectl apply -f "{{ monitoring_dir }}/grafana-service.yml"
+
+
+    # -------------------------
+    # VERIFY DEPLOYMENTS
+    # -------------------------
+
+    - name: Wait for Prometheus rollout
+      command:
+        cmd: kubectl rollout status deployment/prometheus -n monitoring --timeout=180s
+
+    - name: Wait for kube-state-metrics rollout
+      command:
+        cmd: kubectl rollout status deployment/kube-state-metrics -n monitoring --timeout=180s
+
+    - name: Wait for Grafana rollout
+      command:
+        cmd: kubectl rollout status deployment/grafana -n monitoring --timeout=180s
+
     - name: Show BMS pods
       command:
         cmd: kubectl get pods -l app=bms
 
+    - name: Show monitoring pods
+      command:
+        cmd: kubectl get pods -n monitoring
+
     - name: Show BMS service
       command:
         cmd: kubectl get service bms-service
+
+    - name: Show Grafana service
+      command:
+        cmd: kubectl get service grafana -n monitoring
