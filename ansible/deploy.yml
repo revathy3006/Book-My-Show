@@ -16,11 +16,11 @@
         msg: "Deploying BMS image with BUILD_NUMBER={{ build_number }}"
 
     - name: Create temporary deployment file
-      template:
-        src: "../deployment.yml"
+      copy:
+        src: "{{ deployment_file }}"
         dest: "/tmp/bms-deployment.yml"
 
-    - name: Replace IMAGE_TAG with BUILD_NUMBER
+    - name: Replace IMAGE_TAG with Jenkins BUILD_NUMBER
       replace:
         path: "/tmp/bms-deployment.yml"
         regexp: "IMAGE_TAG"
@@ -30,11 +30,11 @@
       command:
         cmd: kubectl apply -f /tmp/bms-deployment.yml
 
-    - name: Apply BMS service
+    - name: Apply BMS LoadBalancer service
       command:
         cmd: kubectl apply -f "{{ service_file }}"
 
-    - name: Wait for deployment rollout
+    - name: Wait for BMS deployment rollout
       command:
         cmd: kubectl rollout status deployment/bms-app --timeout=180s
 
