@@ -111,6 +111,16 @@ pipeline {
                 '''
             }
         }
+        stage('Deploy to EKS using Ansible') {
+            steps {
+                sh '''
+                    BUILD_NUMBER=${BUILD_NUMBER} \
+                    ansible-playbook \
+                    -i ansible/inventory \
+                    ansible/deploy.yml
+                '''
+            }
+        }
     }
 
     post {
@@ -122,6 +132,7 @@ pipeline {
             echo "SUCCESS!"
             echo "Image pushed:"
             echo "${ECR_REPOSITORY}:${IMAGE_TAG}"
+            echo "Application deployed successfully to EKS using Ansible."
         }
 
         failure {
