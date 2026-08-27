@@ -5,9 +5,9 @@
   gather_facts: false
 
   vars:
-    deployment_file: "../deployment.yml"
-    service_file: "../service.yml"
-    monitoring_dir: "../monitoring"
+    deployment_file: "{{ playbook_dir }}/../deployment.yml"
+    service_file: "{{ playbook_dir }}/../service.yml"
+    monitoring_dir: "{{ playbook_dir }}/../monitoring"
     build_number: "{{ lookup('env', 'BUILD_NUMBER') }}"
     temp_deployment_file: "{{ playbook_dir }}/bms-deployment-{{ build_number }}.yml"
 
