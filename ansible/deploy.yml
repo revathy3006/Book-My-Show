@@ -9,6 +9,7 @@
     service_file: "../service.yml"
     monitoring_dir: "../monitoring"
     build_number: "{{ lookup('env', 'BUILD_NUMBER') }}"
+    temp_deployment_file: "{{ playbook_dir }}/bms-deployment-{{ build_number }}.yml"
 
   tasks:
 
@@ -23,17 +24,17 @@
     - name: Create temporary BMS deployment file
       copy:
         src: "{{ deployment_file }}"
-        dest: "/tmp/bms-deployment.yml"
+        dest: "{{ temp_deployment_file }}"
 
     - name: Replace IMAGE_TAG with Jenkins BUILD_NUMBER
       replace:
-        path: "/tmp/bms-deployment.yml"
+        path: "{{ temp_deployment_file }}"
         regexp: "IMAGE_TAG"
         replace: "{{ build_number }}"
 
     - name: Deploy BMS application
       command:
-        cmd: kubectl apply -f /tmp/bms-deployment.yml
+        cmd: kubectl apply -f "{{ temp_deployment_file }}"
 
     - name: Deploy BMS LoadBalancer service
       command:
